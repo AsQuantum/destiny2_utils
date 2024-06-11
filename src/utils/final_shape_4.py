@@ -81,6 +81,7 @@ def main():
 
     idx_dir_map = {0: '左', 1: '中', 2: '右'}
     str_shape_map = {'0': '●', '3': '▲', '4': '■'}
+    str_shape_name_map = {'0': '圆', '3': '三角', '4': '方'}
     list_3d_shape_map = {'●●': '球', '●▲': '圆锥', '●■': '圆柱', '▲▲': '三棱锥', '▲■': '四棱锥', '■■': '正方体'}
     print(f'{Fore.LIGHTGREEN_EX}◇ 输入图案结果{Fore.RESET}')
 
@@ -90,12 +91,16 @@ def main():
             range(len(any_shape)))
         return pattern_output_map
 
-    print('- 面向方向：\t', '\t'.join(['左', '中', '右']))
-    exterior_name = ','.join(map(lambda dir_shape: list_3d_shape_map.get(dir_shape[-2:], dir_shape[-2:]),
+    print('- 面向方向：\t', '\t'.join(['左', '中', '右', '描述']))
+    exterior_name = ','.join(map(lambda dir_shape: list_3d_shape_map.get(dir_shape, dir_shape),
                                  pattern_converter(initial_shape)))
     print('- 外场雕像：\t',
-          '\t'.join(pattern_converter(initial_shape)), f'\t({exterior_name})')
-    print('- 内场玩家：\t', '\t'.join(pattern_converter(final_shape)))
+          '\t'.join(pattern_converter(initial_shape)),
+          f'\t{Fore.LIGHTBLACK_EX}({exterior_name}){Fore.RESET}')
+    interior_name = ','.join(map(lambda dir_shape: list_3d_shape_map.get(dir_shape, dir_shape),
+                                 pattern_converter(final_shape)))
+    print('- 内场玩家：\t', '\t'.join(pattern_converter(final_shape)),
+          f'\t{Fore.LIGHTBLACK_EX}({interior_name}){Fore.RESET}')
 
     display_shape = copy.deepcopy(initial_shape)
     # Find the minimum swaps path
@@ -112,21 +117,29 @@ def main():
         display_shape_mode_res[step[0]] = ''.join(display_shape_mode_res[step[0]])
         display_shape_mode_res[step[2]] = list(display_shape_mode_res[step[2]])
         display_shape_mode_res[step[2]][
-            index_left] = f'{Fore.LIGHTBLUE_EX}{display_shape_mode_res[step[2]][index_left]}{Fore.RESET}'
+            index_right] = f'{Fore.LIGHTBLUE_EX}{display_shape_mode_res[step[2]][index_right]}{Fore.RESET}'
         display_shape_mode_res[step[2]] = ''.join(display_shape_mode_res[step[2]])
-        display_shape[step[0]][index_left] = step[3]
-        display_shape[step[2]][index_right] = step[1]
+
+        display_shape[step[0]][index_left], display_shape[step[2]][index_right] = (
+            display_shape[step[2]][index_right], display_shape[step[0]][index_left])
+        for ds in display_shape:
+            ds.sort()
         return display_shape_mode_res
 
     # Print the minimum swaps path
     print(f"{Fore.LIGHTGREEN_EX}◇ 最短交换步骤{Fore.RESET}")
-    print('- P:\t', '\t'.join(list('左中右')))
+    print('- P:\t', '\t'.join(['左', '中', '右', '剖切步骤', '当前描述']))
     print(f'- I:\t{Fore.LIGHTBLACK_EX}', '\t'.join(pattern_converter(initial_shape)), Fore.RESET)
     if min_swaps_path:
         for i, step in enumerate(min_swaps_path):
+            shape_name = ','.join(map(lambda dir_shape: list_3d_shape_map.get(dir_shape, dir_shape),
+                                         pattern_converter(display_shape)))
             print(f'- {Fore.LIGHTRED_EX}{i}{Fore.RESET}:\t', '\t'.join(display_mode(display_shape, step)),
                   f"\t({idx_dir_map[step[0]]}{Fore.LIGHTBLUE_EX}{str_shape_map[step[1]]}{Fore.RESET}"
-                  f"{idx_dir_map[step[2]]}{Fore.LIGHTBLUE_EX}{str_shape_map[step[3]]}{Fore.RESET})")
+                  f"{idx_dir_map[step[2]]}{Fore.LIGHTBLUE_EX}{str_shape_map[step[3]]}{Fore.RESET})"
+                  f"\t{Fore.LIGHTBLACK_EX}({shape_name},"
+                  f"{idx_dir_map[step[0]]}{str_shape_name_map[step[1]]}"
+                  f"{idx_dir_map[step[2]]}{str_shape_name_map[step[3]]}){Fore.RESET}")
     else:
         print('- E:\t', "找不到路径或无需交换形状。")
     print(f'- F:\t{Fore.LIGHTBLACK_EX}', '\t'.join(pattern_converter(final_shape)), Fore.RESET)
